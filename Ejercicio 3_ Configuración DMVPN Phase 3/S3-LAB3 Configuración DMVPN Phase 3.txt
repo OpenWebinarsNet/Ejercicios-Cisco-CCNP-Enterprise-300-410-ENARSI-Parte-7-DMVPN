@@ -1,0 +1,25 @@
+CCNP ENARSI
+Curso: DMVPN (Dynamic Multipoint VPN)
+Laboratorio: Configuración DMVPN Phase 3
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars tiene una implementación DMVPN Phase 1 con su oficina central y dos oficinas externas, requiere implementar comunicación en las oficinas de forma directa estableciendo túneles Spoke-to-spoke
+
+Completa los siguientes puntos para configurar DMVPN Phase 3
+
+1. Verifica la conectividad desde R2 hacía las redes LAN de R3 (192.168.1.0/24 y 192.168.2.0/24), que camino toman las rutas ?
+2. Verifica la conectividad desde R3 hacía las redes LAN de R2 (172.16.1.0/24 y 172.16.2.0/24), que camino toman las rutas ?
+3. Activa DMVPN Phase 3 para la interfaz Tunnel 10 en los Spokes R2 y R3, recuerda que se debe deshabilitar el destino del túnel y activar mGRE
+4. Activa DMVPN Phase 3 en el Hub de la topología (R1) en la interfaz Tunnel 10. Desactiva y activa la interfaz tunnel 10 en R1, R2 y R3 para que se reinicie el escenario DMVPN
+5. Existe conectividad entre las redes LAN de R2 y R3 ? A través de qué rutas se aprenden ? Qué indica el mapeo NHRP en R2 y R3 ?
+6. Son accesibles las IP's NBMAs remotas de R2 hacía R3 (2.2.2.2) y desde R3 hacía R2 (1.1.1.2) ?
+7. Anuncia desde el Hub DMVPN (R1) una default-route en el proceso OSPF 10, verifica desde los Spokes R2 y R3 que se está propagando correctamente
+8. Son accesibles las IP's NBMAs remotas de R2 hacía R3 (2.2.2.2) y desde R3 hacía R2 (1.1.1.2) ? Existe ahora conectividad entre las redes LAN de R2 y R3 ?  Cuál es el path que sigue el tráfico ?
+9. Verifica estado DMVPN y NHRP en R1, R2 y R3
+
+
+
+
+
+

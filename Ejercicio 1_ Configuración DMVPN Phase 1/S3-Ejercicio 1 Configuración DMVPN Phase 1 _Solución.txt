@@ -1,0 +1,318 @@
+CCNP ENARSI
+Curso: DMVPN (Dynamic Multipoint VPN)
+Laboratorio: Configuración DMVPN Phase 1 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars requiere implmenentar DMVPN a través de internet para la interconexión entre su oficina central y dos oficinas externas
+
+
+1. Configura el origen (underlay) y destino para el tunnel 10 en los Spokes R2 y R3, el origen debe ser la interfaz de conexión con R1 y el destino debe ser la dirección IP de la loopback 100 del Hub -7.7.7.7/32-, ambos túneles deben ser GRE
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#int tunnel 10
+R2(config-if)#tunnel source fast0/0
+R2(config-if)#tunnel destination 7.7.7.7
+R2(config-if)#tunnel mode gre ip
+R2(config-if)#end
+R2#
+
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#int tunnel 10
+R3(config-if)#tunnel source fa1/0
+R3(config-if)#tunnel destination 7.7.7.7
+R3(config-if)#
+R3(config-if)#tunnel mode gre ip
+R3(config-if)#end
+R3#
+
+_____________________________________________________________________________________
+
+2. Configura la interfaz Loopback 100 como origen del túnel 10  en el Hub (R1), habilita mGRE en dicha interfaz, configura dicho equipo para que pueda añadir de forma automática a los Spokes a los mapeos Multicast NHRP
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#int tunnel 10
+R1(config-if)#tunnel source lo100
+R1(config-if)#tunnel mode gre multipoint
+R1(config-if)#
+R1(config-if)#ip nhrp map multicast dynamic
+R1(config-if)#end
+
+_____________________________________________________________________________________
+
+3. Configura la identificación de NHRP con id-1 en R1, R2 y R3. Se debe habilitar la autenticación NHRP con PSK "enarsi"
+
+R1#CONF T
+R1(config)#int tunnel 10
+R1(config-if)#ip nhrp network-id 1
+R1(config-if)#ip nhrp authentication enarsi
+R1(config-if)#end
+R1#
+
+R2#
+R2#conf t
+R2(config)#int tunnel 10
+R2(config-if)#ip nhrp network-id 1
+R2(config-if)#ip nhrp authentication enarsi
+R2(config-if)#end
+R2#
+
+R3#
+R3#conf t
+R3(config)#int tunnel 10
+R3(config-if)#ip nhrp network-id 1
+R3(config-if)#ip nhrp authentication enarsi
+R3(config-if)#end
+R3#
+_____________________________________________________________________________________
+
+4. En los Spokes R2 y R3, define a R1 como servidor NHS, también se debe mapear el tráfico Multicast a la dirección física del Hub y realizar el mapeo estático de la dirección del Hub y su dirección NBMA
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#int tunnel 10
+R2(config-if)#ip nhrp nhs 8.8.8.1
+R2(config-if)#ip nhrp map multicast 7.7.7.7
+R2(config-if)#ip nhrp map 8.8.8.1 7.7.7.7
+R2(config-if)#end
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#int tunnel 10
+R3(config-if)#ip nhrp nhs 8.8.8.1
+R3(config-if)#ip nhrp map multicast 7.7.7.7
+R3(config-if)#ip nhrp map 8.8.8.1 7.7.7.7
+R3(config-if)#end
+R3#
+_____________________________________________________________________________________
+
+5. Activa la interfaz Tunnel 10 en R1 y verifica que se ha establecido el tunnel mGRE Multipoint (DMVPN) de forma correcta, verifica a su vez la operación NHRP
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#
+R1(config)#int tunnel 10
+R1(config-if)#no shutdown
+R1(config-if)#end
+R1#
+
+
+R1#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Hub, NHRP Peers:2,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add S****************tate  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     1 2.2.2.2                 4.4.4.4    UP 00:00:15     D
+     1 1.1.1.2                 8.8.8.2    UP 00:00:17     D
+
+R1#
+R1#show ip nhrp brief
+   Target             Via            NBMA           Mode   Intfc   Claimed
+4.4.4.4/32           4.4.4.4         2.2.2.2         dynamic  Tu10    <   >
+8.8.8.2/32           8.8.8.2         1.1.1.2         dynamic  Tu10    <   >
+R1#
+
+R2#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Spoke, NHRP Peers:1,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add State  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     1 7.7.7.7                 8.8.8.1    UP 00:00:59     S
+
+R2#
+R2#show ip nhrp brief
+   Target             Via            NBMA           Mode   Intfc   Claimed
+8.8.8.1/32           8.8.8.1         7.7.7.7         static   Tu10    <   >
+R2#
+
+R3#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Spoke, NHRP Peers:1,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add State  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     1 7.7.7.7                 8.8.8.1    UP 00:01:13     S
+
+R3#show ip nhrp brief
+   Target             Via            NBMA           Mode   Intfc   Claimed
+8.8.8.1/32           8.8.8.1         7.7.7.7         static   Tu10    <   >
+R3#
+_____________________________________________________________________________________
+
+6. Activa en la interfaz Tunnel 10 de R1 el proceso OSPF con id 10 en el área 0. Tras activarlo, hay conectividad entre las redes LAN de R2 y R3 ¿? 
+
+R1#
+R1#conf t
+R1(config)#int tunnel 10
+R1(config-if)#ip ospf 10 area 0
+R1(config-if)#end
+R1#
+
+
+Respuesta: No, no hay conectividad
+
+R2#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R2#
+R2#ping 192.168.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.2.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R2#
+
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R3#ping 172.16.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.2.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R3#
+
+_____________________________________________________________________________________
+
+7. Verifica que network-type tienen asignadas las interfaces tunnel 10 en R1, R2 y R3. Modifica a broadcast y asegura que los Spokes R2 y R3 no puedan convertirse en DR/BDR
+
+R1#show ip ospf interface tunnel 10 | in Network
+  Process ID 10, Router ID 8.8.8.1, Network Type POINT_TO_POINT, Cost: 1000
+
+R2#show ip ospf interface tunnel 10 | in Network
+  Process ID 10, Router ID 8.8.8.2, Network Type POINT_TO_POINT, Cost: 1000
+R2#
+
+R3#show ip ospf interface tunnel 10 | in Netw
+  Process ID 10, Router ID 8.8.8.3, Network Type POINT_TO_POINT, Cost: 1000
+
+--> Modificación:
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#int tunnel 10
+R1(config-if)#ip ospf network broadcast
+R1(config-if)#end
+
+R2#
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#int tunnel 10
+R2(config-if)#ip os
+R2(config-if)#ip ospf priority 0
+R2(config-if)#ip ospf network broadcast
+R2(config-if)#end
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#int tunnel 10
+R3(config-if)#ip ospf priority 0
+R3(config-if)#ip ospf network broadcast
+R3(config-if)#end
+R3#
+_____________________________________________________________________________________
+
+8. Verifica nuevamente la conectividad entre las redes LAN de R2 y R3, a través de qué rutas se conocen ? Realiza un tracert entre cualquiera de ellas para determinar la ruta que sigue el tráfico
+
+
+R2#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/67/84 ms
+R2#
+R2#ping 192.168.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/63/72 ms
+R2#
+
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/61/64 ms
+R3#
+R3#ping 172.16.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/63/64 ms
+R3#
+
+Respuesta: Se conocen vía OSPF a través del túnel DMVPN
+
+R2#show ip route | in 192.168.
+O     192.168.1.0/24 [110/1001] via 8.8.8.3, 00:00:53, Tunnel10
+O     192.168.2.0/24 [110/1001] via 8.8.8.3, 00:00:53, Tunnel10
+R2#
+
+R3#show ip route | in 172.16.
+      172.16.0.0/24 is subnetted, 2 subnets
+O        172.16.1.0 [110/1001] via 8.8.8.2, 00:00:36, Tunnel10
+O        172.16.2.0 [110/1001] via 8.8.8.2, 00:00:36, Tunnel10
+R3#
+
+Respuesta: El tráfico atraviesa el HUB (8.8.8.1) para alcanzar el destino remoto
+
+R2#traceroute 192.168.1.1
+Type escape sequence to abort.
+Tracing the route to 192.168.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 20 msec 28 msec 32 msec
+  2 8.8.8.3 68 msec 56 msec 60 msec
+R2#
+R2#traceroute 192.168.2.1
+Type escape sequence to abort.
+Tracing the route to 192.168.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 24 msec 24 msec 32 msec
+  2 8.8.8.3 68 msec 60 msec 68 msec
+R2#
+
+R3#traceroute 172.16.1.1
+Type escape sequence to abort.
+Tracing the route to 172.16.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 44 msec 32 msec 32 msec
+  2 8.8.8.2 56 msec 64 msec 60 msec
+R3#
+R3#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 32 msec 32 msec 32 msec
+  2 8.8.8.2 64 msec 56 msec 68 msec
+R3#

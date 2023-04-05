@@ -1,0 +1,298 @@
+CCNP ENARSI
+Curso: DMVPN (Dynamic Multipoint VPN)
+Laboratorio: Configuración DMVPN Phase 2
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Tras la implementación de DMVPN Phase 1, Openwebinars requiere que sus oficinas externas se comuniquen entre sí de forma directa, estableciendo túneles spoke-to-spoke
+
+Completa los siguientes puntos para configurar DMVPN Phase 2
+ 
+
+1. Verifica la conectividad desde R2 hacía las redes LAN de R3 (192.168.1.0/24 y 192.168.2.0/24), que camino toman las rutas ?
+
+Respuesta: Hay conectividad y atraviesan R1 (8.8.8.1) para alcanzar las redes LAN de R3
+
+R2#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 64/66/76 ms
+R2#ping 192.168.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/64/68 ms
+R2#tracer
+R2#traceroute 192.168.1.1
+Type escape sequence to abort.
+Tracing the route to 192.168.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 32 msec 32 msec 32 msec
+  2 8.8.8.3 64 msec 64 msec 52 msec
+R2#traceroute 192.168.2.1
+Type escape sequence to abort.
+Tracing the route to 192.168.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 32 msec 32 msec 32 msec
+  2 8.8.8.3 60 msec 64 msec 64 msec
+R2#
+_____________________________________________________________________________________
+
+2. Verifica la conectividad desde R3 hacía las redes LAN de R2 (172.16.1.0/24 y 172.16.2.0/24), que camino toman las rutas ?
+
+Respuesta: Hay conectividad y atraviesan R1 (8.8.8.1) para alcanzar las redes LAN de R3
+
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/60/64 ms
+R3#ping 172.16.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/63/68 ms
+R3#traceroute 172.16.1.1
+Type escape sequence to abort.
+Tracing the route to 172.16.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 32 msec 32 msec 32 msec
+  2 8.8.8.2 64 msec 64 msec 60 msec
+R3#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.1 24 msec 24 msec 36 msec
+  2 8.8.8.2 60 msec 68 msec 56 msec
+R3#
+_____________________________________________________________________________________
+
+3. Activa DMVPN Phase 2 para la interfaz Tunnel 10 en los Spokes R2 y R3, recuerda que se debe deshabilitar el destino del túnel y activar mGRE
+
+R2#conf t
+R2(config)#int tunnel 10
+R2(config-if)#no tunnel destination
+R2(config-if)#
+R2(config-if)#tunnel mode gre multipoint
+R2(config-if)#end
+R2#
+
+R3#conf t
+R3(config)#int tunnel 10
+R3(config-if)#no tunnel destination
+R3(config-if)#tunnel mode gre multipoint
+R3(config-if)#end
+R3#
+_____________________________________________________________________________________
+
+4. Existe conectividad entre las redes LAN de R2 y R3 ? A través de qué rutas se aprenden ? Qué indica el mapeo NHRP en R2 y R3 ?
+
+Respuesta: No, se conocen a través de OSPF anunciadas vía 8.8.8.3 (R3) y 8.8.8.2 (R2). El mapeo NHRP indica que las neighbors que anuncian las redes tienen como direcciones NBMA 2 1.1.1.2/8.8.8.2 (R2) y 2.2.2.2/8.8.8.3 (R3)
+
+R2#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R2#ping 192.168.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.2.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R2#show ip route | in 192.168.
+O     192.168.1.0/24 [110/1001] via 8.8.8.3, 00:09:47, Tunnel10
+O     192.168.2.0/24 [110/1001] via 8.8.8.3, 00:09:47, Tunnel10
+
+
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R3#ping 172.16.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.2.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R3#show ip route | in 172.16.
+      172.16.0.0/24 is subnetted, 2 subnets
+O        172.16.1.0 [110/1001] via 8.8.8.2, 00:10:16, Tunnel10
+O        172.16.2.0 [110/1001] via 8.8.8.2, 00:10:16, Tunnel10
+R3#
+
+
+R2#show ip nhrp brief
+   Target             Via            NBMA           Mode   Intfc   Claimed
+8.8.8.1/32           8.8.8.1         7.7.7.7         static   Tu10    <   >
+8.8.8.3/32           8.8.8.3         7.7.7.7         dynamic  Tu10    <   >
+R2#
+
+R3#show ip nhrp brief
+   Target             Via            NBMA           Mode   Intfc   Claimed
+8.8.8.1/32           8.8.8.1         7.7.7.7         static   Tu10    <   >
+8.8.8.2/32           8.8.8.2         1.1.1.2         dynamic  Tu10    <   >
+8.8.8.3/32           8.8.8.3         2.2.2.2         dynamic  Tu10    <   >
+
+_____________________________________________________________________________________
+
+5. Son accesibles las IP's NBMAs remotas de R2 hacía R3 (2.2.2.2) y desde R3 hacía R2 (1.1.1.2) ?
+
+Respuesta: No, no son accesibles
+
+R2#ping 2.2.2.2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 2.2.2.2, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R2#
+
+R3#
+R3#ping 1.1.1.2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 1.1.1.2, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R3#
+_____________________________________________________________________________________
+
+6. Configura una ruta estática en R2 para la red de interconexión entre R1-R3. debe apuntar al túnel DMVPN (interfaz tunnel 10), ya qué es donde se encuentra la dirección NBMA de R3 (2.2.2.2). Haz lo mismo a la inversa en R3 con la red de interconexión entre R1-R2 (1.1.1.0/30)
+
+R2#conf t
+R2(config)#ip route 2.2.2.0 255.255.255.252 Tunnel10
+R2(config)#end
+R2#
+
+R3#conf t
+R3(config)#ip route 1.1.1.0 255.255.255.252 Tunnel10
+R3(config)#end
+R3#
+_____________________________________________________________________________________
+
+7. Son accesibles las IP's NBMAs remotas de R2 hacía R3 (2.2.2.2) y desde R3 hacía R2 (1.1.1.2) ? Existe ahora conectividad entre las redes LAN de R2 y R3 ?  Cuál es el path que sigue el tráfico ?
+
+Respuesta 1: Si.  
+Respuesta 2: Si, existe conectividad. 
+Respuesta 3: De forma directa
+
+R2#ping 2.2.2.2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 2.2.2.2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/70/104 ms
+
+R3#ping 1.1.1.2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 1.1.1.2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/63/72 ms
+R3#
+
+R2#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 64/70/96 ms
+R2#ping 192.168.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/63/64 ms
+
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/64/76 ms
+R3#ping 172.16.2.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.2.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 60/63/64 ms
+
+R2#traceroute 192.168.1.1
+Type escape sequence to abort.
+Tracing the route to 192.168.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.3 60 msec 64 msec 64 msec
+R2#traceroute 192.168.2.1
+Type escape sequence to abort.
+Tracing the route to 192.168.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.3 64 msec 60 msec 64 msec
+R2#
+
+
+R3#traceroute 172.16.1.1
+Type escape sequence to abort.
+Tracing the route to 172.16.1.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.2 64 msec 64 msec 56 msec
+R3#traceroute 172.16.2.1
+Type escape sequence to abort.
+Tracing the route to 172.16.2.1
+VRF info: (vrf in name/id, vrf out name/id)
+  1 8.8.8.2 64 msec 60 msec 64 msec
+R3#
+_____________________________________________________________________________________
+
+8. Verifica estado DMVPN en R1, R2 y R3 
+
+R1#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Hub, NHRP Peers:2,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add State  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     1 1.1.1.2                 8.8.8.2    UP 00:29:19     D
+     1 2.2.2.2                 8.8.8.3    UP 00:29:19     D
+
+R1#
+
+R2#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Spoke, NHRP Peers:2,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add State  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     3 7.7.7.7                 8.8.8.1    UP 00:10:44     D
+                               2.2.2.2    UP 00:02:56     D
+                               8.8.8.1    UP 00:10:43     S
+     1 2.2.2.2                 8.8.8.3    UP 00:02:51     D
+
+R2#
+
+R3#show dmvpn
+Legend: Attrb --> S - Static, D - Dynamic, I - Incomplete
+        N - NATed, L - Local, X - No Socket
+        # Ent --> Number of NHRP entries with same NBMA peer
+        NHS Status: E --> Expecting Replies, R --> Responding, W --> Waiting
+        UpDn Time --> Up or Down Time for a Tunnel
+==========================================================================
+
+Interface: Tunnel10, IPv4 NHRP Details
+Type:Spoke, NHRP Peers:2,
+
+ # Ent  Peer NBMA Addr Peer Tunnel Add State  UpDn Tm Attrb
+ ----- --------------- --------------- ----- -------- -----
+     3 7.7.7.7                 8.8.8.1    UP 00:10:49     D
+                               1.1.1.2    UP 00:02:59     D
+                               8.8.8.1    UP 00:10:48     S
+     1 1.1.1.2                 8.8.8.2    UP 00:10:31     D
+
+R3#
+

@@ -1,0 +1,26 @@
+CCNP ENARSI
+Curso: DMVPN (Dynamic Multipoint VPN)
+Laboratorio: Configuración DMVPN Phase 1 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars requiere implmenentar DMVPN a través de internet para la interconexión entre su oficina central y dos oficinas externas
+
+Completa los siguientes puntos para configurar DMVPN Phase 1
+
+1. Configura el origen (underlay) y destino para el tunnel 10 en los Spokes R2 y R3, el origen debe ser la interfaz de conexión con R1 y el destino debe ser la dirección IP de la loopback 100 del Hub -7.7.7.7/32-, ambos túneles deben ser GRE
+2. Configura la interfaz Loopback 100 como origen del túnel 10  en el Hub (R1), habilita mGRE en dicha interfaz, configura dicho equipo para que pueda añadir de forma automática a los Spokes a los mapeos Multicast NHRP
+3. Configura la identificación de NHRP con id-1 en R1, R2 y R3. Se debe habilitar la autenticación NHRP con PSK "enarsi"
+4. En los Spokes R2 y R3, define a R1 como servidor NHS, también se debe mapear el tráfico Multicast a la dirección física del Hub y realizar el mapeo estático de la dirección del Hub y su dirección NBMA
+5. Activa la interfaz Tunnel 10 en R1 y verifica que se ha establecido el tunnel mGRE Multipoint (DMVPN) de forma correcta, verifica a su vez la operación NHRP
+6. Activa en la interfaz Tunnel 10 de R1 el proceso OSPF con id 10 en el área 0. Tras activarlo, hay conectividad entre las redes LAN de R2 y R3 ¿? 
+7. Verifica que network-type tienen asignadas las interfaces tunnel 10 en R1, R2 y R3. Modifica si es necesario para que se puede establecer la vecindad OSPF entre R1, R2 y R3
+8. Verifica nuevamente la conectividad entre las redes LAN de R2 y R3, a través de qué rutas se conocen ? Realiza un tracert entre cualquiera de ellas para determinar la ruta que sigue el tráfico
+
+
+
+
+
+
+
+
